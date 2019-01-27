@@ -193,11 +193,9 @@ public class BuildMojo extends AbstractDockerMojo {
       buildParameters.add(new DockerClient.BuildParam("buildargs", encodeBuildParam(buildArgs)));
     }
 
-    final ArrayList<DockerClient.EventsParam> eventsParameters = new ArrayList<>();
 
     if (labels != null && !labels.isEmpty()) {
-      labels.forEach((key, value) ->
-              eventsParameters.add(DockerClient.EventsParam.label(key, value)));
+      buildParameters.add(new DockerClient.BuildParam("labels", encodeBuildParam(labels)));
     }
 
     if (cacheFrom != null) {
@@ -229,9 +227,6 @@ public class BuildMojo extends AbstractDockerMojo {
     final DockerClient.BuildParam[] buildParametersArray =
         buildParameters.toArray(new DockerClient.BuildParam[buildParameters.size()]);
 
-    final DockerClient.EventsParam[] eventsParamsArray =
-            eventsParameters.toArray(new DockerClient.EventsParam[eventsParameters.size()]);
-
     log.info(""); // Spacing around build progress
     try {
       if (repository != null) {
@@ -239,12 +234,10 @@ public class BuildMojo extends AbstractDockerMojo {
         log.info(MessageFormat.format("Image will be built as {0}", name));
         log.info(""); // Spacing around build progress
         dockerClient.build(contextDirectory, name, progressHandler, buildParametersArray);
-        dockerClient.events(eventsParamsArray);
       } else {
         log.info("Image will be built without a name");
         log.info(""); // Spacing around build progress
         dockerClient.build(contextDirectory, progressHandler, buildParametersArray);
-        dockerClient.events(eventsParamsArray);
       }
     } catch (DockerException | IOException | InterruptedException e) {
       throw new MojoExecutionException("Could not build image", e);
